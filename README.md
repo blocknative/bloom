@@ -8,9 +8,8 @@ A set of bloom filter implementations, forked from [zentures](https://github.com
 
 Package `bloom` currently supports:
 
-* Standard
-* Partitioned
-* Scalable
+* Optimized bloom filters (hash-partitioned arrays)
+* Scalable Bloom Filters
 
 Additional information regarding benchmarks is [here](http://zhen.org/blog/benchmarking-bloom-filters-and-hash-functions-in-go/).
 
