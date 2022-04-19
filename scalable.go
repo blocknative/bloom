@@ -22,19 +22,8 @@ import (
 // to choose an a priori maximum size for the set, and allows an arbitrary growth of the set being presented."
 // Reference #2: Scalable Bloom Filters (http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf)
 type ScalableFilter struct {
+	params
 	opt []Option
-
-	// p is the fill ratio of the filter partitions. It's mainly used to calculate m at the start.
-	// p is not checked when new items are added. So if the fill ratio goes above p, the likelihood
-	// of false positives (error rate) will increase.
-	//
-	// By default we use the fill ratio of p = 0.5
-	p float64
-
-	// e is the desired error rate of the bloom filter. The lower the e, the higher the k.
-	//
-	// By default we use the error rate of e = 0.1% = 0.001. In some papers sbf is P (uppercase P)
-	e float64
 
 	// n is the number of elements the filter is predicted to hold while maintaining the error rate
 	// or filter size (m). n is user supplied. But, in case you are interested, the formula is
@@ -60,33 +49,25 @@ func NewScalable(n uint, opt ...Option) *ScalableFilter {
 		panic("n == 0")
 	}
 
-	var (
-		p float64 = 0.5
-		e float64 = 0.001
-		r float32 = 0.9
-	)
-
-	bf := &ScalableFilter{
+	bf := ScalableFilter{
 		opt: opt,
 		n:   n,
-		p:   p,
-		e:   e,
-		r:   r,
+		r:   0.9,
+	}
+
+	for _, option := range withDefault(opt) {
+		option(&bf.params)
 	}
 
 	bf.addBloomFilter()
 
-	return bf
+	return &bf
 }
 
 func (sbf *ScalableFilter) Reset() {
 	sbf.bfs = []*Filter{}
 	sbf.c = 0
 	sbf.addBloomFilter()
-}
-
-func (sbf *ScalableFilter) SetErrorProbability(e float64) {
-	sbf.e = e
 }
 
 func (sbf *ScalableFilter) EstimatedFillRatio() float64 {
@@ -130,10 +111,6 @@ func (sbf *ScalableFilter) Count() uint {
 
 func (sbf *ScalableFilter) addBloomFilter() {
 	e := sbf.e * math.Pow(float64(sbf.r), float64(len(sbf.bfs)))
-
-	bf := New(sbf.n, sbf.opt...)
-	bf.SetErrorProbability(e)
-	bf.Reset()
-
+	bf := New(sbf.n, append(sbf.opt, WithErrorRate(e))...)
 	sbf.bfs = append(sbf.bfs, bf)
 }

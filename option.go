@@ -6,7 +6,27 @@ import (
 	"github.com/zentures/cityhash"
 )
 
-type Option func(f *Filter)
+type params struct {
+	h hash.Hash
+
+	// e specifies the desired error rate for the filter.
+	// Smaller values of e imply a larger number of hash values used
+	// to set and test bits (the K parameter).
+	//
+	// If e <= 0, defaults to .001
+	e float64
+
+	// p specifies the maximum porportion of bits that may be
+	// set to 1 in the filter.  This influences how large the filter must
+	// be in order to guarantee the specified error rate.  Note that this
+	// fill ratio is not strictly enforced.  Overloading a filter happens
+	// silently, causing the error rate (false positives) to increase.
+	//
+	// If p <= 0, defaults to 0.5
+	p float64
+}
+
+type Option func(*params)
 
 // WithHash specifies the hash to use with the bloom filter.
 // If h == nil, defaults to CityHash.
@@ -15,8 +35,8 @@ func WithHash(h hash.Hash) Option {
 		h = cityhash.New64()
 	}
 
-	return func(f *Filter) {
-		f.h = h
+	return func(ps *params) {
+		ps.h = h
 	}
 }
 
@@ -30,8 +50,8 @@ func WithErrorRate(e float64) Option {
 		e = .001
 	}
 
-	return func(f *Filter) {
-		f.e = e
+	return func(ps *params) {
+		ps.e = e
 	}
 }
 
@@ -47,8 +67,8 @@ func WithFillRatio(p float64) Option {
 		p = .5
 	}
 
-	return func(f *Filter) {
-		f.p = p
+	return func(ps *params) {
+		ps.p = p
 	}
 }
 

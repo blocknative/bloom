@@ -15,8 +15,6 @@
 package bloom
 
 import (
-	"hash"
-
 	"encoding/binary"
 	"math"
 
@@ -44,9 +42,7 @@ func s(m, k uint) uint {
 //
 // The name Partitioned Bloom Filter is my choice as there was no name assigned to f variant.
 type Filter struct {
-	// h is the hash function used to get the list of h1..hk values
-	// By default we use hash/fnv.New64(). User can also set their own using SetHasher()
-	h hash.Hash
+	params
 
 	// m is the total number of bits for f bloom filter. m for the partitioned bloom filter
 	// will be divided into k partitions, or slices. So each partition contains Math.ceil(m/k) bits.
@@ -63,18 +59,6 @@ type Filter struct {
 	// k = log2(1/e)
 	// Given that our e is defaulted to 0.001, therefore k ~= 10, which means we need 10 hash values
 	k uint
-
-	// p is the fill ratio of the filter partitions. It's mainly used to calculate m at the start.
-	// p is not checked when new items are added. So if the fill ratio goes above p, the likelihood
-	// of false positives (error rate) will increase.
-	//
-	// By default we use the fill ratio of p = 0.5
-	p float64
-
-	// e is the desired error rate of the bloom filter. The lower the e, the higher the k.
-	//
-	// By default we use the error rate of e = 0.1% = 0.001. In some papers f is P (uppercase P)
-	e float64
 
 	// n is the number of elements the filter is predicted to hold while maintaining the error rate
 	// or filter size (m). n is user supplied. But, in case you are interested, the formula is
@@ -104,7 +88,7 @@ func New(n uint, opt ...Option) *Filter {
 
 	var f = Filter{n: n}
 	for _, option := range withDefault(opt) {
-		option(&f)
+		option(&f.params)
 	}
 
 	f.k = k(f.e)
@@ -122,10 +106,6 @@ func (f *Filter) Reset() {
 	}
 
 	f.h.Reset()
-}
-
-func (f *Filter) SetErrorProbability(e float64) {
-	f.e = e
 }
 
 func (f *Filter) EstimatedFillRatio() float64 {
