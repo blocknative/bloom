@@ -20,10 +20,10 @@ import (
 	"math"
 )
 
-// ScalableBloom is an implementation of the Scalable Bloom Filter that "addresses the problem of having
+// ScalableFilter is an implementation of the Scalable Bloom Filter that "addresses the problem of having
 // to choose an a priori maximum size for the set, and allows an arbitrary growth of the set being presented."
 // Reference #2: Scalable Bloom Filters (http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf)
-type ScalableBloom struct {
+type ScalableFilter struct {
 	// h is the hash function used to get the list of h1..hk values
 	// By default we use hash/fnv.New64(). User can also set their own using SetHasher()
 	h hash.Hash
@@ -62,7 +62,7 @@ type ScalableBloom struct {
 
 // New initializes a new partitioned bloom filter.
 // n is the number of items sbf bloom filter predicted to hold.
-func NewScalable(n uint) *ScalableBloom {
+func NewScalable(n uint) *ScalableFilter {
 	var (
 		p float64   = 0.5
 		e float64   = 0.001
@@ -70,7 +70,7 @@ func NewScalable(n uint) *ScalableBloom {
 		h hash.Hash = fnv.New64()
 	)
 
-	bf := &ScalableBloom{
+	bf := &ScalableFilter{
 		h: h,
 		n: n,
 		p: p,
@@ -83,15 +83,15 @@ func NewScalable(n uint) *ScalableBloom {
 	return bf
 }
 
-func (sbf *ScalableBloom) SetBloomFilter(f func(uint) *Filter) {
+func (sbf *ScalableFilter) SetBloomFilter(f func(uint) *Filter) {
 	sbf.bfc = f
 }
 
-func (sbf *ScalableBloom) SetHasher(h hash.Hash) {
+func (sbf *ScalableFilter) SetHasher(h hash.Hash) {
 	sbf.h = h
 }
 
-func (sbf *ScalableBloom) Reset() {
+func (sbf *ScalableFilter) Reset() {
 	if sbf.h == nil {
 		sbf.h = fnv.New64()
 	} else {
@@ -103,15 +103,15 @@ func (sbf *ScalableBloom) Reset() {
 	sbf.addBloomFilter()
 }
 
-func (sbf *ScalableBloom) SetErrorProbability(e float64) {
+func (sbf *ScalableFilter) SetErrorProbability(e float64) {
 	sbf.e = e
 }
 
-func (sbf *ScalableBloom) EstimatedFillRatio() float64 {
+func (sbf *ScalableFilter) EstimatedFillRatio() float64 {
 	return sbf.bfs[len(sbf.bfs)-1].EstimatedFillRatio()
 }
 
-func (sbf *ScalableBloom) FillRatio() float64 {
+func (sbf *ScalableFilter) FillRatio() float64 {
 	// Since sbf has multiple bloom filters, we will return the average
 	t := float64(0)
 	for i := range sbf.bfs {
@@ -120,7 +120,7 @@ func (sbf *ScalableBloom) FillRatio() float64 {
 	return t / float64(len(sbf.bfs))
 }
 
-func (sbf *ScalableBloom) Add(item []byte) {
+func (sbf *ScalableFilter) Add(item []byte) {
 	i := len(sbf.bfs) - 1
 
 	if sbf.bfs[i].EstimatedFillRatio() > sbf.p {
@@ -132,7 +132,7 @@ func (sbf *ScalableBloom) Add(item []byte) {
 	sbf.c++
 }
 
-func (sbf *ScalableBloom) Check(item []byte) bool {
+func (sbf *ScalableFilter) Check(item []byte) bool {
 	l := len(sbf.bfs)
 	for i := l - 1; i >= 0; i-- {
 		if sbf.bfs[i].Check(item) {
@@ -142,11 +142,11 @@ func (sbf *ScalableBloom) Check(item []byte) bool {
 	return false
 }
 
-func (sbf *ScalableBloom) Count() uint {
+func (sbf *ScalableFilter) Count() uint {
 	return sbf.c
 }
 
-func (sbf *ScalableBloom) addBloomFilter() {
+func (sbf *ScalableFilter) addBloomFilter() {
 	var bf *Filter
 	if sbf.bfc == nil {
 		bf = New(sbf.n)

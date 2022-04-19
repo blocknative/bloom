@@ -26,7 +26,7 @@ import (
 	"github.com/zentures/cityhash"
 )
 
-func testScalableBloomFilter(t *testing.T, bf *ScalableBloom) {
+func testScalableBloomFilter(t *testing.T, bf *ScalableFilter) {
 	fn, fp := 0, 0
 
 	for l := range web2 {
