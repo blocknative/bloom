@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package standard
+package bloom
 
 import (
 	"bufio"
@@ -65,7 +65,7 @@ func init() {
 	}
 }
 
-func testBloomFilter(t *testing.T, bf *BloomFilter) {
+func testBloomFilter(t *testing.T, bf *Filter) {
 	fn, fp := 0, 0
 
 	for l := range web2 {

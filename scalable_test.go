@@ -12,62 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scalable
+package bloom
 
 import (
-	"bufio"
 	"crypto/md5"
 	"crypto/sha1"
-	"fmt"
 	"hash"
 	"hash/crc64"
 	"hash/fnv"
-	"os"
 	"testing"
 
-	"github.com/blocknative/bloom/partitioned"
-	"github.com/blocknative/bloom/standard"
 	"github.com/spaolacci/murmur3"
 	"github.com/zentures/cityhash"
 )
 
-var (
-	web2, web2a []string
-)
-
-func init() {
-	file, err := os.Open("/usr/share/dict/web2")
-	if err != nil {
-		fmt.Println("Cannot open /usr/share/dict/web2 - " + err.Error())
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		web2 = append(web2, scanner.Text())
-	}
-
-	if err = scanner.Err(); err != nil {
-		fmt.Println("Error reading file - " + err.Error())
-	}
-
-	file2, err2 := os.Open("/usr/share/dict/web2a")
-	if err2 != nil {
-		fmt.Println("Cannot open /usr/share/dict/web2a - " + err2.Error())
-	}
-	defer file2.Close()
-
-	scanner = bufio.NewScanner(file2)
-	for scanner.Scan() {
-		web2a = append(web2a, scanner.Text())
-	}
-
-	if err2 = scanner.Err(); err2 != nil {
-		fmt.Println("Error reading file - " + err2.Error())
-	}
-}
-
-func testBloomFilter(t *testing.T, bf SubFilter) {
+func testScalableBloomFilter(t *testing.T, bf *ScalableBloom) {
 	fn, fp := 0, 0
 
 	for l := range web2 {
@@ -83,43 +42,37 @@ func testBloomFilter(t *testing.T, bf SubFilter) {
 		}
 	}
 
-	fmt.Printf("Total false negatives: %d (%.4f%%)\n", fn, (float32(fn) / float32(len(web2)) * 100))
-	fmt.Printf("Total false positives: %d (%.4f%%)\n", fp, (float32(fp) / float32(len(web2a)) * 100))
+	t.Logf("Total false negatives: %d (%.4f%%)\n", fn, (float32(fn) / float32(len(web2)) * 100))
+	t.Logf("Total false positives: %d (%.4f%%)\n", fp, (float32(fp) / float32(len(web2a)) * 100))
 }
 
-func TestBloomFilter(t *testing.T) {
+func TestScalableBloomFilter(t *testing.T) {
 	t.Parallel()
 
 	l := []uint{uint(len(web2)), 200000, 100000, 50000}
 	h := []hash.Hash{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA)), murmur3.New64(), cityhash.New64(), md5.New(), sha1.New()}
 	n := []string{"fnv.New64()", "crc64.New()", "murmur3.New64()", "cityhash.New64()", "md5.New()", "sha1.New()"}
-	b := []func(uint) SubFilter{
-		func(u uint) SubFilter { return standard.New(u) },
-		func(u uint) SubFilter { return partitioned.New(u) }}
-	bn := []string{"standard", "partitioned"}
 
 	for i := range l {
 		for j := range h {
-			for k := range b {
-				fmt.Printf("\n\nTesting %s with size %d using %s\n", n[j], l[i], bn[k])
-				bf := New(l[i])
-				bf.SetHasher(h[j])
-				bf.(*ScalableBloom).SetBloomFilter(b[k])
-				bf.Reset()
-				testBloomFilter(t, bf)
-			}
+			t.Logf("\n\nTesting %s with size %d\n", n[j], l[i])
+			bf := NewScalable(l[i])
+			bf.SetHasher(h[j])
+			bf.SetBloomFilter(New)
+			bf.Reset()
+			testScalableBloomFilter(t, bf)
 		}
 	}
 }
 
-func BenchmarkBloomFNV64(b *testing.B) {
+func BenchmarkScalableFNV64(b *testing.B) {
 	var lines []string
 	lines = append(lines, web2...)
 	for len(lines) < b.N {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
+	bf := NewScalable(uint(b.N))
 	fn := 0
 
 	b.ResetTimer()
@@ -133,14 +86,14 @@ func BenchmarkBloomFNV64(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkBloomCRC64(b *testing.B) {
+func BenchmarkScalableCRC64(b *testing.B) {
 	var lines []string
 	lines = append(lines, web2...)
 	for len(lines) < b.N {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
+	bf := NewScalable(uint(b.N))
 	bf.SetHasher(crc64.New(crc64.MakeTable(crc64.ECMA)))
 	bf.Reset()
 	fn := 0
@@ -156,14 +109,14 @@ func BenchmarkBloomCRC64(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkBloomMurmur3(b *testing.B) {
+func BenchmarkScalableMurmur3(b *testing.B) {
 	var lines []string
 	lines = append(lines, web2...)
 	for len(lines) < b.N {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
+	bf := NewScalable(uint(b.N))
 	bf.SetHasher(murmur3.New64())
 	bf.Reset()
 	fn := 0
@@ -179,14 +132,14 @@ func BenchmarkBloomMurmur3(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkBloomCityHash(b *testing.B) {
+func BenchmarkScalableCityHash(b *testing.B) {
 	var lines []string
 	lines = append(lines, web2...)
 	for len(lines) < b.N {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
+	bf := NewScalable(uint(b.N))
 	bf.SetHasher(cityhash.New64())
 	bf.Reset()
 	fn := 0
@@ -202,14 +155,14 @@ func BenchmarkBloomCityHash(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkBloomMD5(b *testing.B) {
+func BenchmarkScalableMD5(b *testing.B) {
 	var lines []string
 	lines = append(lines, web2...)
 	for len(lines) < b.N {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
+	bf := NewScalable(uint(b.N))
 	bf.SetHasher(md5.New())
 	bf.Reset()
 	fn := 0
@@ -225,14 +178,14 @@ func BenchmarkBloomMD5(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkBloomSha1(b *testing.B) {
+func BenchmarkScalableSha1(b *testing.B) {
 	var lines []string
 	lines = append(lines, web2...)
 	for len(lines) < b.N {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
+	bf := NewScalable(uint(b.N))
 	bf.SetHasher(sha1.New())
 	bf.Reset()
 	fn := 0

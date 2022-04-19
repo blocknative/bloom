@@ -12,25 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scalable
+package bloom
 
 import (
 	"hash"
 	"hash/fnv"
 	"math"
-
-	"github.com/blocknative/bloom/partitioned"
 )
-
-type SubFilter interface {
-	Add(key []byte)
-	Check(key []byte) bool
-	SetHasher(hash.Hash)
-	Reset()
-	FillRatio() float64
-	EstimatedFillRatio() float64
-	SetErrorProbability(e float64)
-}
 
 // ScalableBloom is an implementation of the Scalable Bloom Filter that "addresses the problem of having
 // to choose an a priori maximum size for the set, and allows an arbitrary growth of the set being presented."
@@ -66,15 +54,15 @@ type ScalableBloom struct {
 	r float32
 
 	// bfs is an array of bloom filters used by the scalable bloom filter
-	bfs []SubFilter
+	bfs []*Filter
 
 	// bfc is the bloom filter constructor (New()) that returns the bloom filter to use
-	bfc func(uint) SubFilter
+	bfc func(uint) *Filter
 }
 
 // New initializes a new partitioned bloom filter.
 // n is the number of items sbf bloom filter predicted to hold.
-func New(n uint) SubFilter {
+func NewScalable(n uint) *ScalableBloom {
 	var (
 		p float64   = 0.5
 		e float64   = 0.001
@@ -95,7 +83,7 @@ func New(n uint) SubFilter {
 	return bf
 }
 
-func (sbf *ScalableBloom) SetBloomFilter(f func(uint) SubFilter) {
+func (sbf *ScalableBloom) SetBloomFilter(f func(uint) *Filter) {
 	sbf.bfc = f
 }
 
@@ -110,7 +98,7 @@ func (sbf *ScalableBloom) Reset() {
 		sbf.h.Reset()
 	}
 
-	sbf.bfs = []SubFilter{}
+	sbf.bfs = []*Filter{}
 	sbf.c = 0
 	sbf.addBloomFilter()
 }
@@ -159,9 +147,9 @@ func (sbf *ScalableBloom) Count() uint {
 }
 
 func (sbf *ScalableBloom) addBloomFilter() {
-	var bf SubFilter
+	var bf *Filter
 	if sbf.bfc == nil {
-		bf = partitioned.New(sbf.n)
+		bf = New(sbf.n)
 	} else {
 		bf = sbf.bfc(sbf.n)
 	}
