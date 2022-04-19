@@ -1,0 +1,6 @@
+github.com/bits-and-blooms/bitset v1.2.2 h1:J5gbX05GpMdBjCvQ9MteIg2KKDExr7DrgK+Yc15FvIk=
+github.com/bits-and-blooms/bitset v1.2.2/go.mod h1:gIdJ4wp64HaoK2YrL1Q5/N7Y16edYb8uY+O0FJTyyDA=
+github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0bLI=
+github.com/spaolacci/murmur3 v1.1.0/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
+github.com/zentures/cityhash v0.0.0-20131128155616-cdd6a94144ab h1:BD4YbH4Y0ysgbrP9jGuDB0BxkqyTRk6Y70o3D5Z5ayc=
+github.com/zentures/cityhash v0.0.0-20131128155616-cdd6a94144ab/go.mod h1:SvJE1nX57VqPOyqkQGEGcJPWZqeB3FCZ8s7a0uSlG+A=

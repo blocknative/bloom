@@ -25,9 +25,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/blocknative/bloom"
 	"github.com/spaolacci/murmur3"
-	"github.com/zhenjl/bloom"
-	"github.com/zhenjl/cityhash"
+	"github.com/zentures/cityhash"
 )
 
 var (

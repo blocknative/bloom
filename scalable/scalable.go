@@ -20,8 +20,8 @@ import (
 	"hash/fnv"
 	"math"
 
-	"github.com/zhenjl/bloom"
-	"github.com/zhenjl/bloom/partitioned"
+	"github.com/blocknative/bloom"
+	"github.com/blocknative/bloom/partitioned"
 )
 
 // ScalableBloom is an implementation of the Scalable Bloom Filter that "addresses the problem of having

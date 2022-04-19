@@ -22,8 +22,8 @@ import (
 	"encoding/binary"
 	"math"
 
-	"github.com/willf/bitset"
-	"github.com/zhenjl/bloom"
+	"github.com/bits-and-blooms/bitset"
+	"github.com/blocknative/bloom"
 )
 
 // StandardBloom is the classic bloom filter implementation

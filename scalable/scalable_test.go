@@ -25,11 +25,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/blocknative/bloom"
+	"github.com/blocknative/bloom/partitioned"
+	"github.com/blocknative/bloom/standard"
 	"github.com/spaolacci/murmur3"
-	"github.com/zhenjl/bloom"
-	"github.com/zhenjl/bloom/partitioned"
-	"github.com/zhenjl/bloom/standard"
-	"github.com/zhenjl/cityhash"
+	"github.com/zentures/cityhash"
 )
 
 var (
