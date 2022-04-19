@@ -87,6 +87,8 @@ func testBloomFilter(t *testing.T, bf bloom.Bloom) {
 }
 
 func TestBloomFilter(t *testing.T) {
+	t.Parallel()
+
 	l := []uint{uint(len(web2)), 200000, 100000, 50000}
 	h := []hash.Hash{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA)), murmur3.New64(), cityhash.New64(), md5.New(), sha1.New()}
 	n := []string{"fnv.New64()", "crc64.New()", "murmur3.New64()", "cityhash.New64()", "md5.New()", "sha1.New()"}
