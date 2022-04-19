@@ -55,9 +55,6 @@ type ScalableFilter struct {
 
 	// bfs is an array of bloom filters used by the scalable bloom filter
 	bfs []*Filter
-
-	// bfc is the bloom filter constructor (New()) that returns the bloom filter to use
-	bfc func(uint) *Filter
 }
 
 // New initializes a new partitioned bloom filter.
@@ -81,10 +78,6 @@ func NewScalable(n uint) *ScalableFilter {
 	bf.addBloomFilter()
 
 	return bf
-}
-
-func (sbf *ScalableFilter) SetBloomFilter(f func(uint) *Filter) {
-	sbf.bfc = f
 }
 
 func (sbf *ScalableFilter) SetHasher(h hash.Hash) {
@@ -147,15 +140,9 @@ func (sbf *ScalableFilter) Count() uint {
 }
 
 func (sbf *ScalableFilter) addBloomFilter() {
-	var bf *Filter
-	if sbf.bfc == nil {
-		bf = New(sbf.n)
-	} else {
-		bf = sbf.bfc(sbf.n)
-	}
-
 	e := sbf.e * math.Pow(float64(sbf.r), float64(len(sbf.bfs)))
 
+	bf := New(sbf.n)
 	bf.SetHasher(sbf.h)
 	bf.SetErrorProbability(e)
 	bf.Reset()

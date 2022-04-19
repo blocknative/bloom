@@ -58,7 +58,6 @@ func TestScalableBloomFilter(t *testing.T) {
 			t.Logf("\n\nTesting %s with size %d\n", n[j], l[i])
 			bf := NewScalable(l[i])
 			bf.SetHasher(h[j])
-			bf.SetBloomFilter(New)
 			bf.Reset()
 			testScalableBloomFilter(t, bf)
 		}
