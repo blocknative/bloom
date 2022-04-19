@@ -98,30 +98,23 @@ type Filter struct {
 
 // New initializes a new partitioned bloom filter.
 // n is the number of items bf bloom filter predicted to hold.
-func New(n uint) *Filter {
-	var (
-		p float64 = 0.5
-		e float64 = 0.001
-		k uint    = k(e)
-		m uint    = m(n, p, e)
-		s uint    = s(m, k)
-	)
-
-	return &Filter{
-		h:  fnv.New64(),
-		n:  n,
-		p:  p,
-		e:  e,
-		k:  k,
-		m:  m,
-		s:  s,
-		b:  makePartitions(k, s),
-		bs: make([]uint, k),
+func New(n uint, opt ...Option) *Filter {
+	if n == 0 {
+		panic("n == 0")
 	}
-}
 
-func (bf *Filter) SetHasher(h hash.Hash) {
-	bf.h = h
+	var f = Filter{n: n}
+	for _, option := range withDefault(opt) {
+		option(&f)
+	}
+
+	f.k = k(f.e)
+	f.m = m(n, f.p, f.e)
+	f.s = s(f.m, f.k)
+	f.b = makePartitions(f.k, f.s)
+	f.bs = make([]uint, f.k)
+
+	return &f
 }
 
 func (bf *Filter) Reset() {

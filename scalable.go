@@ -15,8 +15,6 @@
 package bloom
 
 import (
-	"hash"
-	"hash/fnv"
 	"math"
 )
 
@@ -24,9 +22,7 @@ import (
 // to choose an a priori maximum size for the set, and allows an arbitrary growth of the set being presented."
 // Reference #2: Scalable Bloom Filters (http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf)
 type ScalableFilter struct {
-	// h is the hash function used to get the list of h1..hk values
-	// By default we use hash/fnv.New64(). User can also set their own using SetHasher()
-	h hash.Hash
+	opt []Option
 
 	// p is the fill ratio of the filter partitions. It's mainly used to calculate m at the start.
 	// p is not checked when new items are added. So if the fill ratio goes above p, the likelihood
@@ -59,20 +55,23 @@ type ScalableFilter struct {
 
 // New initializes a new partitioned bloom filter.
 // n is the number of items sbf bloom filter predicted to hold.
-func NewScalable(n uint) *ScalableFilter {
+func NewScalable(n uint, opt ...Option) *ScalableFilter {
+	if n == 0 {
+		panic("n == 0")
+	}
+
 	var (
-		p float64   = 0.5
-		e float64   = 0.001
-		r float32   = 0.9
-		h hash.Hash = fnv.New64()
+		p float64 = 0.5
+		e float64 = 0.001
+		r float32 = 0.9
 	)
 
 	bf := &ScalableFilter{
-		h: h,
-		n: n,
-		p: p,
-		e: e,
-		r: r,
+		opt: opt,
+		n:   n,
+		p:   p,
+		e:   e,
+		r:   r,
 	}
 
 	bf.addBloomFilter()
@@ -80,17 +79,7 @@ func NewScalable(n uint) *ScalableFilter {
 	return bf
 }
 
-func (sbf *ScalableFilter) SetHasher(h hash.Hash) {
-	sbf.h = h
-}
-
 func (sbf *ScalableFilter) Reset() {
-	if sbf.h == nil {
-		sbf.h = fnv.New64()
-	} else {
-		sbf.h.Reset()
-	}
-
 	sbf.bfs = []*Filter{}
 	sbf.c = 0
 	sbf.addBloomFilter()
@@ -142,8 +131,7 @@ func (sbf *ScalableFilter) Count() uint {
 func (sbf *ScalableFilter) addBloomFilter() {
 	e := sbf.e * math.Pow(float64(sbf.r), float64(len(sbf.bfs)))
 
-	bf := New(sbf.n)
-	bf.SetHasher(sbf.h)
+	bf := New(sbf.n, sbf.opt...)
 	bf.SetErrorProbability(e)
 	bf.Reset()
 

@@ -29,74 +29,60 @@ import (
 	"github.com/zentures/cityhash"
 )
 
-var (
-	web2, web2a []string
-)
+var web2, web2a []string
 
 func init() {
-	file, err := os.Open("/usr/share/dict/web2")
+	f, err := os.Open("/usr/share/dict/web2")
 	if err != nil {
 		fmt.Println("Cannot open /usr/share/dict/web2 - " + err.Error())
 	}
-	defer file.Close()
+	defer f.Close()
 
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		web2 = append(web2, scanner.Text())
 	}
 
 	if err = scanner.Err(); err != nil {
-		fmt.Println("Error reading file - " + err.Error())
+		panic(err)
 	}
 
-	file2, err2 := os.Open("/usr/share/dict/web2a")
+	f, err2 := os.Open("/usr/share/dict/web2a")
 	if err2 != nil {
-		fmt.Println("Cannot open /usr/share/dict/web2a - " + err2.Error())
+		panic(err)
 	}
-	defer file2.Close()
+	defer f.Close()
 
-	scanner = bufio.NewScanner(file2)
+	scanner = bufio.NewScanner(f)
 	for scanner.Scan() {
 		web2a = append(web2a, scanner.Text())
 	}
 
 	if err2 = scanner.Err(); err2 != nil {
-		fmt.Println("Error reading file - " + err2.Error())
+		panic(err)
 	}
 }
 
-func testBloomFilter(t *testing.T, bf *Filter) {
-	fn, fp := 0, 0
-
-	for l := range web2 {
-		if bf.Add([]byte(web2[l])); !bf.Check([]byte(web2[l])) {
-			fn++
-		}
-	}
-
-	for l := range web2a {
-		if bf.Check([]byte(web2a[l])) {
-			//fmt.Println("False Positive:", web2a[l])
-			fp++
-		}
-	}
-
-	fmt.Printf("Total false negatives: %d (%.4f%%)\n", fn, (float32(fn) / float32(len(web2)) * 100))
-	fmt.Printf("Total false positives: %d (%.4f%%)\n", fp, (float32(fp) / float32(len(web2a)) * 100))
+type filter interface {
+	Add([]byte)
+	Check([]byte) bool
 }
 
 func TestBloomFilter(t *testing.T) {
 	t.Parallel()
 
-	l := []uint{uint(len(web2)), 200000, 100000, 50000}
-	h := []hash.Hash{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA)), murmur3.New64(), cityhash.New64(), md5.New(), sha1.New()}
-	n := []string{"fnv.New64()", "crc64.New()", "murmur3.New64()", "cityhash.New64()", "md5.New()", "sha1.New()"}
+	lengths := []uint{10000, 100000}
+	hashes := []hash.Hash{
+		fnv.New64(),
+		crc64.New(crc64.MakeTable(crc64.ECMA)),
+		murmur3.New64(),
+		cityhash.New64(),
+		md5.New(),
+		sha1.New()}
 
-	for i := range l {
-		for j := range h {
-			fmt.Printf("\n\nTesting %s with size %d\n", n[j], l[i])
-			bf := New(l[i])
-			bf.SetHasher(h[j])
+	for _, l := range lengths {
+		for _, h := range hashes {
+			bf := New(l, WithHash(h))
 			testBloomFilter(t, bf)
 		}
 	}
@@ -130,8 +116,7 @@ func BenchmarkBloomCRC64(b *testing.B) {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
-	bf.SetHasher(crc64.New(crc64.MakeTable(crc64.ECMA)))
+	bf := New(uint(b.N), WithHash(crc64.New(crc64.MakeTable(crc64.ECMA))))
 	fn := 0
 
 	b.ResetTimer()
@@ -152,8 +137,7 @@ func BenchmarkBloomMurmur3(b *testing.B) {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
-	bf.SetHasher(murmur3.New64())
+	bf := New(uint(b.N), WithHash(murmur3.New64()))
 	fn := 0
 
 	b.ResetTimer()
@@ -174,8 +158,7 @@ func BenchmarkBloomCityHash(b *testing.B) {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
-	bf.SetHasher(cityhash.New64())
+	bf := New(uint(b.N), WithHash(cityhash.New64()))
 	fn := 0
 
 	b.ResetTimer()
@@ -196,8 +179,7 @@ func BenchmarkBloomMD5(b *testing.B) {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
-	bf.SetHasher(md5.New())
+	bf := New(uint(b.N), WithHash(md5.New()))
 	fn := 0
 
 	b.ResetTimer()
@@ -218,8 +200,7 @@ func BenchmarkBloomSha1(b *testing.B) {
 		lines = append(lines, web2...)
 	}
 
-	bf := New(uint(b.N))
-	bf.SetHasher(sha1.New())
+	bf := New(uint(b.N), WithHash(sha1.New()))
 	fn := 0
 
 	b.ResetTimer()
@@ -231,4 +212,23 @@ func BenchmarkBloomSha1(b *testing.B) {
 	}
 
 	b.StopTimer()
+}
+
+func testBloomFilter(t *testing.T, f filter) {
+	fn, fp := 0, 0
+
+	for l := range web2 {
+		if f.Add([]byte(web2[l])); !f.Check([]byte(web2[l])) {
+			fn++
+		}
+	}
+
+	for l := range web2a {
+		if f.Check([]byte(web2a[l])) {
+			fp++
+		}
+	}
+
+	fmt.Printf("Total false negatives: %d (%.4f%%)\n", fn, (float32(fn) / float32(len(web2)) * 100))
+	fmt.Printf("Total false positives: %d (%.4f%%)\n", fp, (float32(fp) / float32(len(web2a)) * 100))
 }
