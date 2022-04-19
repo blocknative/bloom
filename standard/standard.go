@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Dataence, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
+// you may not use bf file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
@@ -32,7 +32,7 @@ type StandardBloom struct {
 	// By default we use hash/fnv.New64(). User can also set their own using SetHasher()
 	h hash.Hash
 
-	// m is the total number of bits for this bloom filter. m for the partitioned bloom filter
+	// m is the total number of bits for bf bloom filter. m for the partitioned bloom filter
 	// will be divided into k partitions, or slices. So each partition contains Math.ceil(m/k) bits.
 	//
 	// m =~ n / ((log(p)*log(1-p))/abs(log e))
@@ -61,7 +61,7 @@ type StandardBloom struct {
 
 	// e is the desired error rate of the bloom filter. The lower the e, the higher the k.
 	//
-	// By default we use the error rate of e = 0.1% = 0.001. In some papers this is P (uppercase P)
+	// By default we use the error rate of e = 0.1% = 0.001. In some papers bf is P (uppercase P)
 	e float64
 
 	// n is the number of elements the filter is predicted to hold while maintaining the error rate
@@ -82,7 +82,7 @@ type StandardBloom struct {
 var _ bloom.Bloom = (*StandardBloom)(nil)
 
 // New initializes a new partitioned bloom filter.
-// n is the number of items this bloom filter predicted to hold.
+// n is the number of items bf bloom filter predicted to hold.
 func New(n uint) bloom.Bloom {
 	var (
 		p float64 = 0.5
@@ -103,48 +103,48 @@ func New(n uint) bloom.Bloom {
 	}
 }
 
-func (this *StandardBloom) SetHasher(h hash.Hash) {
-	this.h = h
+func (bf *StandardBloom) SetHasher(h hash.Hash) {
+	bf.h = h
 }
 
-func (this *StandardBloom) Reset() {
-	this.k = bloom.K(this.e)
-	this.m = bloom.M(this.n, this.p, this.e)
-	this.b = bitset.New(this.m)
-	this.bs = make([]uint, this.k)
+func (bf *StandardBloom) Reset() {
+	bf.k = bloom.K(bf.e)
+	bf.m = bloom.M(bf.n, bf.p, bf.e)
+	bf.b = bitset.New(bf.m)
+	bf.bs = make([]uint, bf.k)
 
-	if this.h == nil {
-		this.h = fnv.New64()
+	if bf.h == nil {
+		bf.h = fnv.New64()
 	} else {
-		this.h.Reset()
+		bf.h.Reset()
 	}
 }
 
-func (this *StandardBloom) SetErrorProbability(e float64) {
-	this.e = e
+func (bf *StandardBloom) SetErrorProbability(e float64) {
+	bf.e = e
 }
 
-func (this *StandardBloom) EstimatedFillRatio() float64 {
-	return 1 - math.Exp((-float64(this.c)*float64(this.k))/float64(this.m))
+func (bf *StandardBloom) EstimatedFillRatio() float64 {
+	return 1 - math.Exp((-float64(bf.c)*float64(bf.k))/float64(bf.m))
 }
 
-func (this *StandardBloom) FillRatio() float64 {
-	return float64(this.b.Count()) / float64(this.m)
+func (bf *StandardBloom) FillRatio() float64 {
+	return float64(bf.b.Count()) / float64(bf.m)
 }
 
-func (this *StandardBloom) Add(item []byte) bloom.Bloom {
-	this.bits(item)
-	for _, v := range this.bs[:this.k] {
-		this.b.Set(v)
+func (bf *StandardBloom) Add(item []byte) bloom.Bloom {
+	bf.bits(item)
+	for _, v := range bf.bs[:bf.k] {
+		bf.b.Set(v)
 	}
-	this.c++
-	return this
+	bf.c++
+	return bf
 }
 
-func (this *StandardBloom) Check(item []byte) bool {
-	this.bits(item)
-	for _, v := range this.bs[:this.k] {
-		if !this.b.Test(v) {
+func (bf *StandardBloom) Check(item []byte) bool {
+	bf.bits(item)
+	for _, v := range bf.bs[:bf.k] {
+		if !bf.b.Test(v) {
 			return false
 		}
 	}
@@ -152,27 +152,27 @@ func (this *StandardBloom) Check(item []byte) bool {
 	return true
 }
 
-func (this *StandardBloom) Count() uint {
-	return this.c
+func (bf *StandardBloom) Count() uint {
+	return bf.c
 }
 
-func (this *StandardBloom) PrintStats() {
-	fmt.Printf("m = %d, n = %d, k = %d, s = %d, p = %f, e = %f\n", this.m, this.n, this.k, this.s, this.p, this.e)
-	fmt.Println("Total items:", this.c)
-	c := this.b.Count()
-	fmt.Printf("Total bits set: %d (%.1f%%)\n", c, float32(c)/float32(this.m)*100)
+func (bf *StandardBloom) PrintStats() {
+	fmt.Printf("m = %d, n = %d, k = %d, s = %d, p = %f, e = %f\n", bf.m, bf.n, bf.k, bf.s, bf.p, bf.e)
+	fmt.Println("Total items:", bf.c)
+	c := bf.b.Count()
+	fmt.Printf("Total bits set: %d (%.1f%%)\n", c, float32(c)/float32(bf.m)*100)
 }
 
-func (this *StandardBloom) bits(item []byte) {
-	this.h.Reset()
-	this.h.Write(item)
-	s := this.h.Sum(nil)
+func (bf *StandardBloom) bits(item []byte) {
+	bf.h.Reset()
+	bf.h.Write(item)
+	s := bf.h.Sum(nil)
 	a := binary.BigEndian.Uint32(s[4:8])
 	b := binary.BigEndian.Uint32(s[0:4])
 
 	// Reference: Less Hashing, Same Performance: Building a Better Bloom Filter
 	// URL: http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/rsa.pdf
-	for i, _ := range this.bs[:this.k] {
-		this.bs[i] = (uint(a) + uint(b)*uint(i)) % this.m
+	for i := range bf.bs[:bf.k] {
+		bf.bs[i] = (uint(a) + uint(b)*uint(i)) % bf.m
 	}
 }

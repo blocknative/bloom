@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Dataence, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
+// you may not use sbf file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
@@ -41,7 +41,7 @@ type ScalableBloom struct {
 
 	// e is the desired error rate of the bloom filter. The lower the e, the higher the k.
 	//
-	// By default we use the error rate of e = 0.1% = 0.001. In some papers this is P (uppercase P)
+	// By default we use the error rate of e = 0.1% = 0.001. In some papers sbf is P (uppercase P)
 	e float64
 
 	// n is the number of elements the filter is predicted to hold while maintaining the error rate
@@ -67,7 +67,7 @@ type ScalableBloom struct {
 var _ bloom.Bloom = (*ScalableBloom)(nil)
 
 // New initializes a new partitioned bloom filter.
-// n is the number of items this bloom filter predicted to hold.
+// n is the number of items sbf bloom filter predicted to hold.
 func New(n uint) bloom.Bloom {
 	var (
 		p float64   = 0.5
@@ -89,96 +89,96 @@ func New(n uint) bloom.Bloom {
 	return bf
 }
 
-func (this *ScalableBloom) SetBloomFilter(f func(uint) bloom.Bloom) {
-	this.bfc = f
+func (sbf *ScalableBloom) SetBloomFilter(f func(uint) bloom.Bloom) {
+	sbf.bfc = f
 }
 
-func (this *ScalableBloom) SetHasher(h hash.Hash) {
-	this.h = h
+func (sbf *ScalableBloom) SetHasher(h hash.Hash) {
+	sbf.h = h
 }
 
-func (this *ScalableBloom) Reset() {
-	if this.h == nil {
-		this.h = fnv.New64()
+func (sbf *ScalableBloom) Reset() {
+	if sbf.h == nil {
+		sbf.h = fnv.New64()
 	} else {
-		this.h.Reset()
+		sbf.h.Reset()
 	}
 
-	this.bfs = []bloom.Bloom{}
-	this.c = 0
-	this.addBloomFilter()
+	sbf.bfs = []bloom.Bloom{}
+	sbf.c = 0
+	sbf.addBloomFilter()
 }
 
-func (this *ScalableBloom) SetErrorProbability(e float64) {
-	this.e = e
+func (sbf *ScalableBloom) SetErrorProbability(e float64) {
+	sbf.e = e
 }
 
-func (this *ScalableBloom) EstimatedFillRatio() float64 {
-	return this.bfs[len(this.bfs)-1].EstimatedFillRatio()
+func (sbf *ScalableBloom) EstimatedFillRatio() float64 {
+	return sbf.bfs[len(sbf.bfs)-1].EstimatedFillRatio()
 }
 
-func (this *ScalableBloom) FillRatio() float64 {
-	// Since this has multiple bloom filters, we will return the average
+func (sbf *ScalableBloom) FillRatio() float64 {
+	// Since sbf has multiple bloom filters, we will return the average
 	t := float64(0)
-	for i := range this.bfs {
-		t += this.bfs[i].FillRatio()
+	for i := range sbf.bfs {
+		t += sbf.bfs[i].FillRatio()
 	}
-	return t / float64(len(this.bfs))
+	return t / float64(len(sbf.bfs))
 }
 
-func (this *ScalableBloom) Add(item []byte) bloom.Bloom {
-	i := len(this.bfs) - 1
+func (sbf *ScalableBloom) Add(item []byte) bloom.Bloom {
+	i := len(sbf.bfs) - 1
 
-	if this.bfs[i].EstimatedFillRatio() > this.p {
-		this.addBloomFilter()
+	if sbf.bfs[i].EstimatedFillRatio() > sbf.p {
+		sbf.addBloomFilter()
 		i++
 	}
 
-	this.bfs[i].Add(item)
-	this.c++
-	return this
+	sbf.bfs[i].Add(item)
+	sbf.c++
+	return sbf
 }
 
-func (this *ScalableBloom) Check(item []byte) bool {
-	l := len(this.bfs)
+func (sbf *ScalableBloom) Check(item []byte) bool {
+	l := len(sbf.bfs)
 	for i := l - 1; i >= 0; i-- {
 		//fmt.Println("checking level ", i)
-		if this.bfs[i].Check(item) {
+		if sbf.bfs[i].Check(item) {
 			return true
 		}
 	}
 	return false
 }
 
-func (this *ScalableBloom) Count() uint {
-	return this.c
+func (sbf *ScalableBloom) Count() uint {
+	return sbf.c
 }
 
-func (this *ScalableBloom) PrintStats() {
-	fmt.Printf("n = %d, p = %f, e = %f\n", this.n, this.p, this.e)
-	fmt.Println("Total items:", this.c)
+func (sbf *ScalableBloom) PrintStats() {
+	fmt.Printf("n = %d, p = %f, e = %f\n", sbf.n, sbf.p, sbf.e)
+	fmt.Println("Total items:", sbf.c)
 
-	for i := range this.bfs {
+	for i := range sbf.bfs {
 		fmt.Printf("Scalable Bloom Filter #%d\n", i)
 		fmt.Printf("-------------------------\n")
-		this.bfs[i].PrintStats()
+		sbf.bfs[i].PrintStats()
 	}
 }
 
-func (this *ScalableBloom) addBloomFilter() {
+func (sbf *ScalableBloom) addBloomFilter() {
 	var bf bloom.Bloom
-	if this.bfc == nil {
-		bf = partitioned.New(this.n)
+	if sbf.bfc == nil {
+		bf = partitioned.New(sbf.n)
 	} else {
-		bf = this.bfc(this.n)
+		bf = sbf.bfc(sbf.n)
 	}
 
-	e := this.e * math.Pow(float64(this.r), float64(len(this.bfs)))
+	e := sbf.e * math.Pow(float64(sbf.r), float64(len(sbf.bfs)))
 
-	bf.SetHasher(this.h)
+	bf.SetHasher(sbf.h)
 	bf.SetErrorProbability(e)
 	bf.Reset()
 
-	this.bfs = append(this.bfs, bf)
+	sbf.bfs = append(sbf.bfs, bf)
 	//fmt.Println("Added new bloom filter")
 }
