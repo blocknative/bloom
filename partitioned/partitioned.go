@@ -25,12 +25,12 @@ import (
 	"github.com/blocknative/bloom"
 )
 
-// PartitionedBloom is a variant implementation of the standard bloom filter.
+// BloomFilter is a variant implementation of the standard bloom filter.
 // Reference #1: Approximate Caches for Packet Classification (http://www.ieee-infocom.org/2004/Papers/45_3.PDF)
 // Reference #2: Scalable Bloom Filters (http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf)
 //
 // The name Partitioned Bloom Filter is my choice as there was no name assigned to bf variant.
-type PartitionedBloom struct {
+type BloomFilter struct {
 	// h is the hash function used to get the list of h1..hk values
 	// By default we use hash/fnv.New64(). User can also set their own using SetHasher()
 	h hash.Hash
@@ -82,11 +82,9 @@ type PartitionedBloom struct {
 	bs []uint
 }
 
-var _ bloom.Bloom = (*PartitionedBloom)(nil)
-
 // New initializes a new partitioned bloom filter.
 // n is the number of items bf bloom filter predicted to hold.
-func New(n uint) bloom.Bloom {
+func New(n uint) *BloomFilter {
 	var (
 		p float64 = 0.5
 		e float64 = 0.001
@@ -95,7 +93,7 @@ func New(n uint) bloom.Bloom {
 		s uint    = bloom.S(m, k)
 	)
 
-	return &PartitionedBloom{
+	return &BloomFilter{
 		h:  fnv.New64(),
 		n:  n,
 		p:  p,
@@ -108,11 +106,11 @@ func New(n uint) bloom.Bloom {
 	}
 }
 
-func (bf *PartitionedBloom) SetHasher(h hash.Hash) {
+func (bf *BloomFilter) SetHasher(h hash.Hash) {
 	bf.h = h
 }
 
-func (bf *PartitionedBloom) Reset() {
+func (bf *BloomFilter) Reset() {
 	bf.k = bloom.K(bf.e)
 	bf.m = bloom.M(bf.n, bf.p, bf.e)
 	bf.s = bloom.S(bf.m, bf.k)
@@ -126,15 +124,15 @@ func (bf *PartitionedBloom) Reset() {
 	}
 }
 
-func (bf *PartitionedBloom) SetErrorProbability(e float64) {
+func (bf *BloomFilter) SetErrorProbability(e float64) {
 	bf.e = e
 }
 
-func (bf *PartitionedBloom) EstimatedFillRatio() float64 {
+func (bf *BloomFilter) EstimatedFillRatio() float64 {
 	return 1 - math.Exp(-float64(bf.c)/float64(bf.s))
 }
 
-func (bf *PartitionedBloom) FillRatio() float64 {
+func (bf *BloomFilter) FillRatio() float64 {
 	// Since bf is partitioned, we will return the average fill ratio of all partitions
 	t := float64(0)
 	for _, v := range bf.b[:bf.k] {
@@ -143,7 +141,7 @@ func (bf *PartitionedBloom) FillRatio() float64 {
 	return t / float64(bf.k)
 }
 
-func (bf *PartitionedBloom) Add(item []byte) {
+func (bf *BloomFilter) Add(item []byte) {
 	bf.bits(item)
 	for i, v := range bf.bs[:bf.k] {
 		bf.b[i].Set(v)
@@ -151,7 +149,7 @@ func (bf *PartitionedBloom) Add(item []byte) {
 	bf.c++
 }
 
-func (bf *PartitionedBloom) Check(item []byte) bool {
+func (bf *BloomFilter) Check(item []byte) bool {
 	bf.bits(item)
 	for i, v := range bf.bs[:bf.k] {
 		if !bf.b[i].Test(v) {
@@ -161,11 +159,11 @@ func (bf *PartitionedBloom) Check(item []byte) bool {
 	return true
 }
 
-func (bf *PartitionedBloom) Count() uint {
+func (bf *BloomFilter) Count() uint {
 	return bf.c
 }
 
-func (bf *PartitionedBloom) bits(item []byte) {
+func (bf *BloomFilter) bits(item []byte) {
 	bf.h.Reset()
 	bf.h.Write(item)
 	s := bf.h.Sum(nil)

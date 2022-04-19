@@ -25,7 +25,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/blocknative/bloom"
 	"github.com/spaolacci/murmur3"
 	"github.com/zentures/cityhash"
 )
@@ -66,7 +65,7 @@ func init() {
 	}
 }
 
-func testBloomFilter(t *testing.T, bf bloom.Bloom) {
+func testBloomFilter(t *testing.T, bf *BloomFilter) {
 	fn, fp := 0, 0
 
 	for l := range web2 {

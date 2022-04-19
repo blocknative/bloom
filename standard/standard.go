@@ -25,8 +25,8 @@ import (
 	"github.com/blocknative/bloom"
 )
 
-// StandardBloom is the classic bloom filter implementation
-type StandardBloom struct {
+// BloomFilter is the classic bloom filter implementation
+type BloomFilter struct {
 	// h is the hash function used to get the list of h1..hk values
 	// By default we use hash/fnv.New64(). User can also set their own using SetHasher()
 	h hash.Hash
@@ -74,11 +74,9 @@ type StandardBloom struct {
 	bs []uint
 }
 
-var _ bloom.Bloom = (*StandardBloom)(nil)
-
 // New initializes a new partitioned bloom filter.
 // n is the number of items bf bloom filter predicted to hold.
-func New(n uint) bloom.Bloom {
+func New(n uint) *BloomFilter {
 	var (
 		p float64 = 0.5
 		e float64 = 0.001
@@ -86,7 +84,7 @@ func New(n uint) bloom.Bloom {
 		m uint    = bloom.M(n, p, e)
 	)
 
-	return &StandardBloom{
+	return &BloomFilter{
 		h:  fnv.New64(),
 		n:  n,
 		p:  p,
@@ -98,11 +96,11 @@ func New(n uint) bloom.Bloom {
 	}
 }
 
-func (bf *StandardBloom) SetHasher(h hash.Hash) {
+func (bf *BloomFilter) SetHasher(h hash.Hash) {
 	bf.h = h
 }
 
-func (bf *StandardBloom) Reset() {
+func (bf *BloomFilter) Reset() {
 	bf.k = bloom.K(bf.e)
 	bf.m = bloom.M(bf.n, bf.p, bf.e)
 	bf.b = bitset.New(bf.m)
@@ -115,19 +113,19 @@ func (bf *StandardBloom) Reset() {
 	}
 }
 
-func (bf *StandardBloom) SetErrorProbability(e float64) {
+func (bf *BloomFilter) SetErrorProbability(e float64) {
 	bf.e = e
 }
 
-func (bf *StandardBloom) EstimatedFillRatio() float64 {
+func (bf *BloomFilter) EstimatedFillRatio() float64 {
 	return 1 - math.Exp((-float64(bf.c)*float64(bf.k))/float64(bf.m))
 }
 
-func (bf *StandardBloom) FillRatio() float64 {
+func (bf *BloomFilter) FillRatio() float64 {
 	return float64(bf.b.Count()) / float64(bf.m)
 }
 
-func (bf *StandardBloom) Add(item []byte) {
+func (bf *BloomFilter) Add(item []byte) {
 	bf.bits(item)
 	for _, v := range bf.bs[:bf.k] {
 		bf.b.Set(v)
@@ -135,7 +133,7 @@ func (bf *StandardBloom) Add(item []byte) {
 	bf.c++
 }
 
-func (bf *StandardBloom) Check(item []byte) bool {
+func (bf *BloomFilter) Check(item []byte) bool {
 	bf.bits(item)
 	for _, v := range bf.bs[:bf.k] {
 		if !bf.b.Test(v) {
@@ -146,11 +144,11 @@ func (bf *StandardBloom) Check(item []byte) bool {
 	return true
 }
 
-func (bf *StandardBloom) Count() uint {
+func (bf *BloomFilter) Count() uint {
 	return bf.c
 }
 
-func (bf *StandardBloom) bits(item []byte) {
+func (bf *BloomFilter) bits(item []byte) {
 	bf.h.Reset()
 	bf.h.Write(item)
 	s := bf.h.Sum(nil)

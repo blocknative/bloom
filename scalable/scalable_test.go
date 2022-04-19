@@ -25,7 +25,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/blocknative/bloom"
 	"github.com/blocknative/bloom/partitioned"
 	"github.com/blocknative/bloom/standard"
 	"github.com/spaolacci/murmur3"
@@ -68,7 +67,7 @@ func init() {
 	}
 }
 
-func testBloomFilter(t *testing.T, bf bloom.Bloom) {
+func testBloomFilter(t *testing.T, bf SubFilter) {
 	fn, fp := 0, 0
 
 	for l := range web2 {
@@ -94,7 +93,9 @@ func TestBloomFilter(t *testing.T) {
 	l := []uint{uint(len(web2)), 200000, 100000, 50000}
 	h := []hash.Hash{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA)), murmur3.New64(), cityhash.New64(), md5.New(), sha1.New()}
 	n := []string{"fnv.New64()", "crc64.New()", "murmur3.New64()", "cityhash.New64()", "md5.New()", "sha1.New()"}
-	b := []func(uint) bloom.Bloom{standard.New, partitioned.New}
+	b := []func(uint) SubFilter{
+		func(u uint) SubFilter { return standard.New(u) },
+		func(u uint) SubFilter { return partitioned.New(u) }}
 	bn := []string{"standard", "partitioned"}
 
 	for i := range l {

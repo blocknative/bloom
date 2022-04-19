@@ -15,20 +15,8 @@
 package bloom
 
 import (
-	"hash"
 	"math"
 )
-
-type Bloom interface {
-	Add(key []byte)
-	Check(key []byte) bool
-	Count() uint
-	SetHasher(hash.Hash)
-	Reset()
-	FillRatio() float64
-	EstimatedFillRatio() float64
-	SetErrorProbability(e float64)
-}
 
 func K(e float64) uint {
 	return uint(math.Ceil(math.Log2(1 / e)))
