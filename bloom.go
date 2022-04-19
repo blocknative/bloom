@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Dataence, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use bf file except in compliance with the License.
+// you may not use f file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
@@ -16,7 +16,6 @@ package bloom
 
 import (
 	"hash"
-	"hash/fnv"
 
 	"encoding/binary"
 	"math"
@@ -43,13 +42,13 @@ func s(m, k uint) uint {
 //
 // Reference #2: Scalable Bloom Filters (http://gsd.di.uminho.pt/members/cbm/ps/dpdf)
 //
-// The name Partitioned Bloom Filter is my choice as there was no name assigned to bf variant.
+// The name Partitioned Bloom Filter is my choice as there was no name assigned to f variant.
 type Filter struct {
 	// h is the hash function used to get the list of h1..hk values
 	// By default we use hash/fnv.New64(). User can also set their own using SetHasher()
 	h hash.Hash
 
-	// m is the total number of bits for bf bloom filter. m for the partitioned bloom filter
+	// m is the total number of bits for f bloom filter. m for the partitioned bloom filter
 	// will be divided into k partitions, or slices. So each partition contains Math.ceil(m/k) bits.
 	//
 	// m =~ n / ((log(p)*log(1-p))/abs(log e))
@@ -74,7 +73,7 @@ type Filter struct {
 
 	// e is the desired error rate of the bloom filter. The lower the e, the higher the k.
 	//
-	// By default we use the error rate of e = 0.1% = 0.001. In some papers bf is P (uppercase P)
+	// By default we use the error rate of e = 0.1% = 0.001. In some papers f is P (uppercase P)
 	e float64
 
 	// n is the number of elements the filter is predicted to hold while maintaining the error rate
@@ -97,7 +96,7 @@ type Filter struct {
 }
 
 // New initializes a new partitioned bloom filter.
-// n is the number of items bf bloom filter predicted to hold.
+// n is the number of items f bloom filter predicted to hold.
 func New(n uint, opt ...Option) *Filter {
 	if n == 0 {
 		panic("n == 0")
@@ -117,70 +116,64 @@ func New(n uint, opt ...Option) *Filter {
 	return &f
 }
 
-func (bf *Filter) Reset() {
-	bf.k = k(bf.e)
-	bf.m = m(bf.n, bf.p, bf.e)
-	bf.s = s(bf.m, bf.k)
-	bf.b = makePartitions(bf.k, bf.s)
-	bf.bs = make([]uint, bf.k)
-
-	if bf.h == nil {
-		bf.h = fnv.New64()
-	} else {
-		bf.h.Reset()
+func (f *Filter) Reset() {
+	for _, b := range f.b {
+		b.ClearAll()
 	}
+
+	f.h.Reset()
 }
 
-func (bf *Filter) SetErrorProbability(e float64) {
-	bf.e = e
+func (f *Filter) SetErrorProbability(e float64) {
+	f.e = e
 }
 
-func (bf *Filter) EstimatedFillRatio() float64 {
-	return 1 - math.Exp(-float64(bf.c)/float64(bf.s))
+func (f *Filter) EstimatedFillRatio() float64 {
+	return 1 - math.Exp(-float64(f.c)/float64(f.s))
 }
 
-func (bf *Filter) FillRatio() float64 {
-	// Since bf is partitioned, we will return the average fill ratio of all partitions
+func (f *Filter) FillRatio() float64 {
+	// Since f is partitioned, we will return the average fill ratio of all partitions
 	t := float64(0)
-	for _, v := range bf.b[:bf.k] {
-		t += (float64(v.Count()) / float64(bf.s))
+	for _, v := range f.b[:f.k] {
+		t += (float64(v.Count()) / float64(f.s))
 	}
-	return t / float64(bf.k)
+	return t / float64(f.k)
 }
 
-func (bf *Filter) Add(item []byte) {
-	bf.bits(item)
-	for i, v := range bf.bs[:bf.k] {
-		bf.b[i].Set(v)
+func (f *Filter) Add(item []byte) {
+	f.bits(item)
+	for i, v := range f.bs[:f.k] {
+		f.b[i].Set(v)
 	}
-	bf.c++
+	f.c++
 }
 
-func (bf *Filter) Check(item []byte) bool {
-	bf.bits(item)
-	for i, v := range bf.bs[:bf.k] {
-		if !bf.b[i].Test(v) {
+func (f *Filter) Check(item []byte) bool {
+	f.bits(item)
+	for i, v := range f.bs[:f.k] {
+		if !f.b[i].Test(v) {
 			return false
 		}
 	}
 	return true
 }
 
-func (bf *Filter) Count() uint {
-	return bf.c
+func (f *Filter) Count() uint {
+	return f.c
 }
 
-func (bf *Filter) bits(item []byte) {
-	bf.h.Reset()
-	bf.h.Write(item)
-	s := bf.h.Sum(nil)
+func (f *Filter) bits(item []byte) {
+	f.h.Reset()
+	f.h.Write(item)
+	s := f.h.Sum(nil)
 	a := binary.BigEndian.Uint32(s[4:8])
 	b := binary.BigEndian.Uint32(s[0:4])
 
 	// Reference: Less Hashing, Same Performance: Building a Better Bloom Filter
 	// URL: http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/rsa.pdf
-	for i := range bf.bs[:bf.k] {
-		bf.bs[i] = (uint(a) + uint(b)*uint(i)) % bf.s
+	for i := range f.bs[:f.k] {
+		f.bs[i] = (uint(a) + uint(b)*uint(i)) % f.s
 	}
 }
 
