@@ -127,13 +127,12 @@ func (bf *StandardBloom) FillRatio() float64 {
 	return float64(bf.b.Count()) / float64(bf.m)
 }
 
-func (bf *StandardBloom) Add(item []byte) bloom.Bloom {
+func (bf *StandardBloom) Add(item []byte) {
 	bf.bits(item)
 	for _, v := range bf.bs[:bf.k] {
 		bf.b.Set(v)
 	}
 	bf.c++
-	return bf
 }
 
 func (bf *StandardBloom) Check(item []byte) bool {

@@ -143,13 +143,12 @@ func (bf *PartitionedBloom) FillRatio() float64 {
 	return t / float64(bf.k)
 }
 
-func (bf *PartitionedBloom) Add(item []byte) bloom.Bloom {
+func (bf *PartitionedBloom) Add(item []byte) {
 	bf.bits(item)
 	for i, v := range bf.bs[:bf.k] {
 		bf.b[i].Set(v)
 	}
 	bf.c++
-	return bf
 }
 
 func (bf *PartitionedBloom) Check(item []byte) bool {

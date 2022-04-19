@@ -125,7 +125,7 @@ func (sbf *ScalableBloom) FillRatio() float64 {
 	return t / float64(len(sbf.bfs))
 }
 
-func (sbf *ScalableBloom) Add(item []byte) bloom.Bloom {
+func (sbf *ScalableBloom) Add(item []byte) {
 	i := len(sbf.bfs) - 1
 
 	if sbf.bfs[i].EstimatedFillRatio() > sbf.p {
@@ -135,7 +135,6 @@ func (sbf *ScalableBloom) Add(item []byte) bloom.Bloom {
 
 	sbf.bfs[i].Add(item)
 	sbf.c++
-	return sbf
 }
 
 func (sbf *ScalableBloom) Check(item []byte) bool {

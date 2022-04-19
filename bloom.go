@@ -20,7 +20,7 @@ import (
 )
 
 type Bloom interface {
-	Add(key []byte) Bloom
+	Add(key []byte)
 	Check(key []byte) bool
 	Count() uint
 	SetHasher(hash.Hash)

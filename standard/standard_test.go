@@ -70,7 +70,7 @@ func testBloomFilter(t *testing.T, bf bloom.Bloom) {
 	fn, fp := 0, 0
 
 	for l := range web2 {
-		if !(bf.Add([]byte(web2[l])).Check([]byte(web2[l]))) {
+		if bf.Add([]byte(web2[l])); !bf.Check([]byte(web2[l])) {
 			fn++
 		}
 	}
@@ -114,7 +114,7 @@ func BenchmarkBloomFNV64(b *testing.B) {
 	b.ResetTimer()
 
 	for l := 0; l < b.N; l++ {
-		if !(bf.Add([]byte(lines[l])).Check([]byte(lines[l]))) {
+		if bf.Add([]byte(lines[l])); !bf.Check([]byte(lines[l])) {
 			fn++
 		}
 	}
@@ -136,7 +136,7 @@ func BenchmarkBloomCRC64(b *testing.B) {
 	b.ResetTimer()
 
 	for l := 0; l < b.N; l++ {
-		if !(bf.Add([]byte(lines[l])).Check([]byte(lines[l]))) {
+		if bf.Add([]byte(lines[l])); !bf.Check([]byte(lines[l])) {
 			fn++
 		}
 	}
@@ -158,7 +158,7 @@ func BenchmarkBloomMurmur3(b *testing.B) {
 	b.ResetTimer()
 
 	for l := 0; l < b.N; l++ {
-		if !(bf.Add([]byte(lines[l])).Check([]byte(lines[l]))) {
+		if bf.Add([]byte(lines[l])); !bf.Check([]byte(lines[l])) {
 			fn++
 		}
 	}
@@ -180,7 +180,7 @@ func BenchmarkBloomCityHash(b *testing.B) {
 	b.ResetTimer()
 
 	for l := 0; l < b.N; l++ {
-		if !(bf.Add([]byte(lines[l])).Check([]byte(lines[l]))) {
+		if bf.Add([]byte(lines[l])); !bf.Check([]byte(lines[l])) {
 			fn++
 		}
 	}
@@ -202,7 +202,7 @@ func BenchmarkBloomMD5(b *testing.B) {
 	b.ResetTimer()
 
 	for l := 0; l < b.N; l++ {
-		if !(bf.Add([]byte(lines[l])).Check([]byte(lines[l]))) {
+		if bf.Add([]byte(lines[l])); !bf.Check([]byte(lines[l])) {
 			fn++
 		}
 	}
@@ -224,7 +224,7 @@ func BenchmarkBloomSha1(b *testing.B) {
 	b.ResetTimer()
 
 	for l := 0; l < b.N; l++ {
-		if !(bf.Add([]byte(lines[l])).Check([]byte(lines[l]))) {
+		if bf.Add([]byte(lines[l])); !bf.Check([]byte(lines[l])) {
 			fn++
 		}
 	}
