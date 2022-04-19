@@ -26,7 +26,7 @@ import (
 )
 
 // BloomFilter is a variant implementation of the standard bloom filter.
-// Reference #1: Approximate Caches for Packet Classification (http://www.ieee-infocom.org/2004/Papers/45_3.PDF)
+// Reference #1: Approximate Caches for Packet Classification (https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.6327&rep=rep1&type=pdf)
 // Reference #2: Scalable Bloom Filters (http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf)
 //
 // The name Partitioned Bloom Filter is my choice as there was no name assigned to bf variant.
