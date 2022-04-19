@@ -24,16 +24,16 @@ import (
 	"github.com/bits-and-blooms/bitset"
 )
 
-func K(e float64) uint {
+func k(e float64) uint {
 	return uint(math.Ceil(math.Log2(1 / e)))
 }
 
-func M(n uint, p, e float64) uint {
+func m(n uint, p, e float64) uint {
 	// m =~ n / ((log(p)*log(1-p))/abs(log e))
 	return uint(math.Ceil(float64(n) / ((math.Log(p) * math.Log(1-p)) / math.Abs(math.Log(e)))))
 }
 
-func S(m, k uint) uint {
+func s(m, k uint) uint {
 	return uint(math.Ceil(float64(m) / float64(k)))
 }
 
@@ -102,9 +102,9 @@ func New(n uint) *Filter {
 	var (
 		p float64 = 0.5
 		e float64 = 0.001
-		k uint    = K(e)
-		m uint    = M(n, p, e)
-		s uint    = S(m, k)
+		k uint    = k(e)
+		m uint    = m(n, p, e)
+		s uint    = s(m, k)
 	)
 
 	return &Filter{
@@ -125,9 +125,9 @@ func (bf *Filter) SetHasher(h hash.Hash) {
 }
 
 func (bf *Filter) Reset() {
-	bf.k = K(bf.e)
-	bf.m = M(bf.n, bf.p, bf.e)
-	bf.s = S(bf.m, bf.k)
+	bf.k = k(bf.e)
+	bf.m = m(bf.n, bf.p, bf.e)
+	bf.s = s(bf.m, bf.k)
 	bf.b = makePartitions(bf.k, bf.s)
 	bf.bs = make([]uint, bf.k)
 
