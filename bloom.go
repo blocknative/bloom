@@ -23,7 +23,6 @@ type Bloom interface {
 	Add(key []byte) Bloom
 	Check(key []byte) bool
 	Count() uint
-	PrintStats()
 	SetHasher(hash.Hash)
 	Reset()
 	FillRatio() float64

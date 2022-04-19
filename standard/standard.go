@@ -15,7 +15,6 @@
 package standard
 
 import (
-	"fmt"
 	"hash"
 	"hash/fnv"
 
@@ -47,10 +46,6 @@ type StandardBloom struct {
 	// k = log2(1/e)
 	// Given that our e is defaulted to 0.001, therefore k ~= 10, which means we need 10 hash values
 	k uint
-
-	// s is the size of the partition, or slice.
-	// s = m / k
-	s uint
 
 	// p is the fill ratio of the filter partitions. It's mainly used to calculate m at the start.
 	// p is not checked when new items are added. So if the fill ratio goes above p, the likelihood
@@ -154,13 +149,6 @@ func (bf *StandardBloom) Check(item []byte) bool {
 
 func (bf *StandardBloom) Count() uint {
 	return bf.c
-}
-
-func (bf *StandardBloom) PrintStats() {
-	fmt.Printf("m = %d, n = %d, k = %d, s = %d, p = %f, e = %f\n", bf.m, bf.n, bf.k, bf.s, bf.p, bf.e)
-	fmt.Println("Total items:", bf.c)
-	c := bf.b.Count()
-	fmt.Printf("Total bits set: %d (%.1f%%)\n", c, float32(c)/float32(bf.m)*100)
 }
 
 func (bf *StandardBloom) bits(item []byte) {

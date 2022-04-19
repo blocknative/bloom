@@ -77,8 +77,6 @@ func testBloomFilter(t *testing.T, bf bloom.Bloom) {
 		}
 	}
 
-	bf.PrintStats()
-
 	for l := range web2a {
 		if bf.Check([]byte(web2a[l])) {
 			//fmt.Println("False Positive:", web2a[l])

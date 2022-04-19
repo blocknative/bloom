@@ -15,7 +15,6 @@
 package scalable
 
 import (
-	"fmt"
 	"hash"
 	"hash/fnv"
 	"math"
@@ -142,7 +141,6 @@ func (sbf *ScalableBloom) Add(item []byte) bloom.Bloom {
 func (sbf *ScalableBloom) Check(item []byte) bool {
 	l := len(sbf.bfs)
 	for i := l - 1; i >= 0; i-- {
-		//fmt.Println("checking level ", i)
 		if sbf.bfs[i].Check(item) {
 			return true
 		}
@@ -152,17 +150,6 @@ func (sbf *ScalableBloom) Check(item []byte) bool {
 
 func (sbf *ScalableBloom) Count() uint {
 	return sbf.c
-}
-
-func (sbf *ScalableBloom) PrintStats() {
-	fmt.Printf("n = %d, p = %f, e = %f\n", sbf.n, sbf.p, sbf.e)
-	fmt.Println("Total items:", sbf.c)
-
-	for i := range sbf.bfs {
-		fmt.Printf("Scalable Bloom Filter #%d\n", i)
-		fmt.Printf("-------------------------\n")
-		sbf.bfs[i].PrintStats()
-	}
 }
 
 func (sbf *ScalableBloom) addBloomFilter() {
@@ -180,5 +167,4 @@ func (sbf *ScalableBloom) addBloomFilter() {
 	bf.Reset()
 
 	sbf.bfs = append(sbf.bfs, bf)
-	//fmt.Println("Added new bloom filter")
 }

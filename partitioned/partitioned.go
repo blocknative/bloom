@@ -15,7 +15,6 @@
 package partitioned
 
 import (
-	"fmt"
 	"hash"
 	"hash/fnv"
 
@@ -165,16 +164,6 @@ func (bf *PartitionedBloom) Check(item []byte) bool {
 
 func (bf *PartitionedBloom) Count() uint {
 	return bf.c
-}
-
-func (bf *PartitionedBloom) PrintStats() {
-	fmt.Printf("m = %d, n = %d, k = %d, s = %d, p = %f, e = %f\n", bf.m, bf.n, bf.k, bf.s, bf.p, bf.e)
-	fmt.Println("Total items:", bf.c)
-
-	for i, v := range bf.b[:bf.k] {
-		c := v.Count()
-		fmt.Printf("Bits in partition %d: %d (%.1f%%)\n", i, c, (float32(c)/float32(bf.s))*100)
-	}
 }
 
 func (bf *PartitionedBloom) bits(item []byte) {
