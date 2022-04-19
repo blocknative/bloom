@@ -33,9 +33,9 @@ import (
 var web2, web2a []string
 
 func init() {
-	f, err := os.Open("/usr/share/dict/web2")
+	f, err := os.Open("testdata/web2.golden")
 	if err != nil {
-		fmt.Println("Cannot open /usr/share/dict/web2 - " + err.Error())
+		panic(err)
 	}
 	defer f.Close()
 
@@ -48,7 +48,7 @@ func init() {
 		panic(err)
 	}
 
-	f, err2 := os.Open("/usr/share/dict/web2a")
+	f, err2 := os.Open("testdata/web2a.golden")
 	if err2 != nil {
 		panic(err)
 	}
