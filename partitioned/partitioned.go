@@ -25,8 +25,10 @@ import (
 	"github.com/blocknative/bloom"
 )
 
-// BloomFilter is a variant implementation of the standard bloom filter.
-// Reference #1: Approximate Caches for Packet Classification (https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.6327&rep=rep1&type=pdf)
+// BloomFilter is a variant implementation of the standard bloom filter that
+// reduces the risk of false-positives by assigning a bit array to each hash
+// function.
+//
 // Reference #2: Scalable Bloom Filters (http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf)
 //
 // The name Partitioned Bloom Filter is my choice as there was no name assigned to bf variant.
