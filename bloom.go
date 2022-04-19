@@ -21,19 +21,6 @@ import (
 	"github.com/bits-and-blooms/bitset"
 )
 
-func k(e float64) uint {
-	return uint(math.Ceil(math.Log2(1 / e)))
-}
-
-func m(n uint, p, e float64) uint {
-	// m =~ n / ((log(p)*log(1-p))/abs(log e))
-	return uint(math.Ceil(float64(n) / ((math.Log(p) * math.Log(1-p)) / math.Abs(math.Log(e)))))
-}
-
-func s(m, k uint) uint {
-	return uint(math.Ceil(float64(m) / float64(k)))
-}
-
 // Filter is the standard implementation used by this package.  It is a
 // variant implementation of the standard bloom filter that reduces the risk
 // of false-positives by assigning a bit array to each hash function.
@@ -165,4 +152,17 @@ func makePartitions(k, s uint) []*bitset.BitSet {
 	}
 
 	return b
+}
+
+func k(e float64) uint {
+	return uint(math.Ceil(math.Log2(1 / e)))
+}
+
+func m(n uint, p, e float64) uint {
+	// m =~ n / ((log(p)*log(1-p))/abs(log e))
+	return uint(math.Ceil(float64(n) / ((math.Log(p) * math.Log(1-p)) / math.Abs(math.Log(e)))))
+}
+
+func s(m, k uint) uint {
+	return uint(math.Ceil(float64(m) / float64(k)))
 }
